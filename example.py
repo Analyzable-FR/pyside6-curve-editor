@@ -23,15 +23,37 @@ SOFTWARE.
 '''
 
 
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QPushButton
 import sys
 from level_editor import LevelEditor
+import cv2
+import numpy as np
+
+# Global variable only for the example
+img = cv2.imread("test.jpg")
+
+
+def adjust_image(params):
+    global lut
+    if params[0] == "Value":
+        lut = params[1]
+
+
+def display():
+    global img
+    global lut
+    img_ = lut.take(img.astype(np.int64))
+    cv2.imshow("Test", img_.astype(np.uint8))
 
 
 def main():
     app = QApplication([])
     widget = LevelEditor()
+    widget.levelChanged.connect(adjust_image)
     widget.show()
+    button = QPushButton("Display")
+    button.pressed.connect(display)
+    button.show()
     sys.exit(app.exec())
 
 

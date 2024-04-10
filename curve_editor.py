@@ -26,7 +26,7 @@ from PySide6.QtCore import Signal, QRectF, QPointF, QEvent, Signal, Slot, Qt, QP
 from PySide6.QtGui import QLinearGradient, QPolygonF, QBrush, QColor, QPainterPath, QPainter, QPen
 
 import numpy as np
-from scipy.interpolate import Akima1DInterpolator, PPoly
+from scipy.interpolate import PchipInterpolator, PPoly
 
 
 class CurveEditor(QGraphicsView):
@@ -35,8 +35,7 @@ class CurveEditor(QGraphicsView):
 
     """
 
-    splineChanged = Signal(PPoly)
-    limitsChanged = Signal(tuple)
+    splineChanged = Signal(PPoly, tuple)
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -134,24 +133,24 @@ class CurveEditor(QGraphicsView):
 
     def getSpline(self):
         """
-        Computes an Akima spline interpolation based on the points added to the graphics scene.
+        Computes a spline interpolation based on the points added to the graphics scene.
 
         Returns:
-            Akima1DInterpolator or None: An Akima1DInterpolator object representing the spline interpolation
+            PchipInterpolator or None: An PchipInterpolator object representing the spline interpolation
                 of the normalized (0, 1) points' coordinates along the x-axis and y-axis, or None if an exception occurs.
 
         """
         try:
             self.points.sort(key=lambda p: p.x())
-            line = Akima1DInterpolator([i.pos().x() / 250 for i in self.points], [
-                                       i.pos().y() / 250 for i in self.points])
+            line = PchipInterpolator([i.pos().x() / 250 for i in self.points], [
+                i.pos().y() / 250 for i in self.points])
             return line
         except BaseException:
             return None
 
     def drawSpline(self):
         """
-        Draws a spline based on the computed Akima spline interpolation of the points.
+        Draws a spline based on the computed spline interpolation of the points.
 
         Returns:
             None
@@ -216,7 +215,7 @@ class CurveEditor(QGraphicsView):
                         self.ruler_stop.pos().x() - 5)
                     self.ruler_start.setPos(
                         x_start, self.ruler_start.pos().y())
-                    self.limitsChanged.emit(self.getLimits())
+                    self.splineChanged.emit(self.getSpline(), self.getLimits())
                 elif self.scene.selectedItems()[0] == self.ruler_stop:
                     x_stop = np.clip(
                         self.mapToScene(
@@ -224,10 +223,10 @@ class CurveEditor(QGraphicsView):
                         self.ruler_start.pos().x() + 5,
                         245)
                     self.ruler_stop.setPos(x_stop, self.ruler_stop.pos().y())
-                    self.limitsChanged.emit(self.getLimits())
+                    self.splineChanged.emit(self.getSpline(), self.getLimits())
             elif self.itemAt(event.pos()) in self.points:
                 self.drawSpline()
-                self.splineChanged.emit(self.getSpline())
+                self.splineChanged.emit(self.getSpline(), self.getLimits())
         super().mouseMoveEvent(event)
 
     def eventFilter(self, obj, event):

@@ -38,8 +38,8 @@ class CurveEditor(QGraphicsView):
     splineChanged = Signal(PPoly)
     limitsChanged = Signal(tuple)
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
 
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
@@ -73,6 +73,46 @@ class CurveEditor(QGraphicsView):
         self.ruler_stop.setPos(245, 255)
         self.ruler_stop.setBrush(QBrush(QColor(255, 255, 255)))
         self.ruler_stop.setFlags(QGraphicsItem.ItemIsSelectable)
+
+        self.defaultState = self.getState()
+
+    def reset(self):
+        """
+        Resets the state of the curve editor to the default state.
+
+        Returns:
+            None
+
+        """
+        self.setState(self.defaultState)
+
+    def setState(self, points):
+        """
+        Sets the state of the curve editor with the given points.
+
+        Parameters:
+            points (list): A list of QPointF objects representing the points.
+
+        Returns:
+            None
+
+        """
+        for i in self.points:
+            self.scene.removeItem(i)
+        self.points = []
+        for i in points:
+            self.addPoint(i)
+        self.drawSpline()
+
+    def getState(self):
+        """
+        Retrieves the current state of the curve editor.
+
+        Returns:
+            list: A list of QPointF objects representing the current points.
+
+        """
+        return [i.pos() for i in self.points]
 
     def addPoint(self, coord, isMovable=True):
         """

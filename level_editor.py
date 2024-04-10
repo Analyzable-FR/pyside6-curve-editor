@@ -22,18 +22,35 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 
+from curve_editor import CurveEditor
+import copy
 
-from PySide6.QtWidgets import QApplication
-import sys
-from level_editor import LevelEditor
-
-
-def main():
-    app = QApplication([])
-    widget = LevelEditor()
-    widget.show()
-    sys.exit(app.exec())
+from PySide6.QtWidgets import QWidget, QGridLayout, QLabel, QComboBox, QPushButton
 
 
-if __name__ == '__main__':
-    main()
+class LevelEditor(QWidget):
+
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+
+        self.layout = QGridLayout()
+
+        self.channel = QComboBox(self)
+        self.channel.addItems(["Value", "Red", "Green", "Blue"])
+        self.layout.addWidget(self.channel)
+        self.channel.currentIndexChanged.connect(self.changeChannel)
+        self.currentChannel = 0
+
+        self.view = CurveEditor(self)
+        self.layout.addWidget(self.view)
+        self.presets = [copy.copy(self.view.defaultState)] * 4
+
+        self.reset = QPushButton(self.tr("Reset"), self)
+        self.layout.addWidget(self.reset)
+        self.setLayout(self.layout)
+        self.reset.pressed.connect(self.view.reset)
+
+    def changeChannel(self, index):
+        self.presets[self.currentChannel] = copy.copy(self.view.getState())
+        self.view.setState(self.presets[index])
+        self.currentChannel = index

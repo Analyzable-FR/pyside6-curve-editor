@@ -21,11 +21,12 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
-from PySide6.QtWidgets import QGraphicsSceneMouseEvent, QGraphicsRectItem, QGraphicsItem, QGraphicsPathItem, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QApplication, QWidget, QScrollArea, QLabel
+from PySide6.QtWidgets import QGraphicsSceneMouseEvent, QGraphicsRectItem, QGraphicsItem, QGraphicsPathItem, QGraphicsScene, QGraphicsView
 from PySide6.QtCore import QRectF, QPointF, QEvent, Signal, Slot, Qt, QPoint
-from PySide6.QtGui import QLinearGradient, QPolygonF, QBrush, QColor, QPainterPath, QImage, QPixmap, QFont, QPainter, QPen, QCursor, QKeySequence
-from scipy.interpolate import CubicSpline, Akima1DInterpolator
+from PySide6.QtGui import QLinearGradient, QPolygonF, QBrush, QColor, QPainterPath, QPainter, QPen
+
 import numpy as np
+from scipy.interpolate import CubicSpline, Akima1DInterpolator
 
 
 class CurveEditor(QGraphicsView):
@@ -44,6 +45,7 @@ class CurveEditor(QGraphicsView):
         self.scene.installEventFilter(self)
         self.setMouseTracking(True)
 
+        self.scene.addLine(0, 250, 250, 0, QPen(Qt.DotLine))
         self.background = self.scene.addRect(
             0, 0, 250, 250, brush=QBrush(QColor(50, 50, 50, 50)))
 
@@ -132,6 +134,20 @@ class CurveEditor(QGraphicsView):
         """
         return (self.ruler_start.scenePos().x() / 250,
                 (self.ruler_stop.scenePos().x() + 5) / 250)
+
+    def mouseReleaseEvent(self, event):
+        """
+        Overrides the mouseReleaseEvent method to clear the selection in the scene after the mouse is released.
+
+        Parameters:
+            event (QMouseEvent): The mouse release event object.
+
+        Returns:
+            None
+
+        """
+        self.scene.clearSelection()
+        super().mouseReleaseEvent(event)
 
     def mouseMoveEvent(self, event):
         """
@@ -249,4 +265,4 @@ class PointItem(QGraphicsItem):
 
         """
         painter.setBrush(QBrush(QColor(255, 0, 0)))
-        painter.drawEllipse(-5, -5, 10, 10)
+        painter.drawEllipse(-3, -3, 6, 6)

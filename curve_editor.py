@@ -22,11 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 from PySide6.QtWidgets import QGraphicsSceneMouseEvent, QGraphicsRectItem, QGraphicsItem, QGraphicsPathItem, QGraphicsScene, QGraphicsView
-from PySide6.QtCore import QRectF, QPointF, QEvent, Signal, Slot, Qt, QPoint
+from PySide6.QtCore import Signal, QRectF, QPointF, QEvent, Signal, Slot, Qt, QPoint
 from PySide6.QtGui import QLinearGradient, QPolygonF, QBrush, QColor, QPainterPath, QPainter, QPen
 
 import numpy as np
-from scipy.interpolate import CubicSpline, Akima1DInterpolator
+from scipy.interpolate import Akima1DInterpolator, PPoly
 
 
 class CurveEditor(QGraphicsView):
@@ -34,6 +34,9 @@ class CurveEditor(QGraphicsView):
     A class representing a curve editor that inherits from QGraphicsView.
 
     """
+
+    splineChanged = Signal(PPoly)
+    limitsChanged = Signal(tuple)
 
     def __init__(self):
         super().__init__()
@@ -132,8 +135,10 @@ class CurveEditor(QGraphicsView):
             within the range of 0 to 1 relative to the total width of the scene (250 pixels).
 
         """
-        return (self.ruler_start.scenePos().x() / 250,
-                (self.ruler_stop.scenePos().x() + 5) / 250)
+
+        limits = (self.ruler_start.scenePos().x() / 250,
+                  (self.ruler_stop.scenePos().x() + 5) / 250)
+        return limits
 
     def mouseReleaseEvent(self, event):
         """
@@ -161,7 +166,6 @@ class CurveEditor(QGraphicsView):
 
         """
         if event.buttons() == Qt.LeftButton:
-            self.drawSpline()
             items = self.scene.selectedItems()
             if items:
                 if self.scene.selectedItems()[0] == self.ruler_start:
@@ -172,6 +176,7 @@ class CurveEditor(QGraphicsView):
                         self.ruler_stop.pos().x() - 5)
                     self.ruler_start.setPos(
                         x_start, self.ruler_start.pos().y())
+                    self.limitsChanged.emit(self.getLimits())
                 elif self.scene.selectedItems()[0] == self.ruler_stop:
                     x_stop = np.clip(
                         self.mapToScene(
@@ -179,6 +184,10 @@ class CurveEditor(QGraphicsView):
                         self.ruler_start.pos().x() + 5,
                         245)
                     self.ruler_stop.setPos(x_stop, self.ruler_stop.pos().y())
+                    self.limitsChanged.emit(self.getLimits())
+            elif self.itemAt(event.pos()) in self.points:
+                self.drawSpline()
+                self.splineChanged.emit(self.getSpline())
         super().mouseMoveEvent(event)
 
     def eventFilter(self, obj, event):

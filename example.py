@@ -32,8 +32,10 @@ from curve_editor import CurveEditor
 def main():
     app = QApplication([])
     widget = CurveEditor()
+    widget.splineChanged.connect(lambda x: print(x))
+    widget.limitsChanged.connect(lambda x: print(x))
     widget.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 if __name__ == '__main__':
     main()

@@ -21,9 +21,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
-from PySide6.QtWidgets import QGraphicsSceneMouseEvent, QGraphicsPolygonItem, QGraphicsItem, QGraphicsPathItem, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QApplication, QWidget, QScrollArea, QLabel
+from PySide6.QtWidgets import QGraphicsSceneMouseEvent, QGraphicsRectItem, QGraphicsItem, QGraphicsPathItem, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QApplication, QWidget, QScrollArea, QLabel
 from PySide6.QtCore import QRectF, QPointF, QEvent, Signal, Slot, Qt, QPoint
-from PySide6.QtGui import QPolygonF, QBrush, QColor, QPainterPath, QImage, QPixmap, QFont, QPainter, QPen, QCursor, QKeySequence
+from PySide6.QtGui import QLinearGradient, QPolygonF, QBrush, QColor, QPainterPath, QImage, QPixmap, QFont, QPainter, QPen, QCursor, QKeySequence
 from scipy.interpolate import CubicSpline, Akima1DInterpolator
 import numpy as np
 
@@ -55,6 +55,20 @@ class CurveEditor(QGraphicsView):
         self.addPoint(QPointF(251, 0), False)
         self.drawSpline()
 
+        self.ruler = QGraphicsRectItem(QRectF(0, 255, 250, 5), self.background)
+        gradient = QLinearGradient(0, 250, 250, 250)
+        gradient.setColorAt(0, QColor(255, 255, 255))
+        gradient.setColorAt(1, QColor(0, 0, 0))
+        self.ruler.setBrush(QBrush(gradient))
+        self.ruler_start = QGraphicsRectItem(QRectF(0, 0, 5, 5), self.ruler)
+        self.ruler_start.setPos(0, 255)
+        self.ruler_start.setFlags(QGraphicsItem.ItemIsSelectable)
+        self.ruler_start.setBrush(QBrush(QColor(255, 255, 255)))
+        self.ruler_stop = QGraphicsRectItem(QRectF(0, 0, 5, 5), self.ruler)
+        self.ruler_stop.setPos(245, 255)
+        self.ruler_stop.setBrush(QBrush(QColor(255, 255, 255)))
+        self.ruler_stop.setFlags(QGraphicsItem.ItemIsSelectable)
+
     def addPoint(self, coord, isMovable=True):
         """
         Adds a point to the graphics scene.
@@ -79,13 +93,13 @@ class CurveEditor(QGraphicsView):
 
         Returns:
             Akima1DInterpolator or None: An Akima1DInterpolator object representing the spline interpolation
-                of the points' coordinates along the x-axis and y-axis, or None if an exception occurs.
+                of the normalized (0, 1) points' coordinates along the x-axis and y-axis, or None if an exception occurs.
 
         """
         try:
             self.points.sort(key=lambda p: p.x())
-            line = Akima1DInterpolator([i.pos().x() for i in self.points], [
-                                       i.pos().y() for i in self.points])
+            line = Akima1DInterpolator([i.pos().x() / 250 for i in self.points], [
+                                       i.pos().y() / 250 for i in self.points])
             return line
         except BaseException:
             return None
@@ -101,11 +115,23 @@ class CurveEditor(QGraphicsView):
         spline = self.getSpline()
         if spline:
             path = QPainterPath(QPointF(0, 250))
-            x = np.arange(0, 250)
-            y = np.clip(spline(x), 0, 250)
+            x = np.linspace(0, 1, 250)
+            y = np.clip(spline(x), 0, 1)
             for i, j in zip(x, y):
-                path.lineTo(i, j)
+                path.lineTo(i * 250, j * 250)
             self.path.setPath(path)
+
+    def getLimits(self):
+        """
+        Retrieves the limits of the ruler.
+
+        Returns:
+            tuple: A tuple containing the normalized start and end positions of the ruler
+            within the range of 0 to 1 relative to the total width of the scene (250 pixels).
+
+        """
+        return (self.ruler_start.scenePos().x() / 250,
+                (self.ruler_stop.scenePos().x() + 5) / 250)
 
     def mouseMoveEvent(self, event):
         """
@@ -120,6 +146,23 @@ class CurveEditor(QGraphicsView):
         """
         if event.buttons() == Qt.LeftButton:
             self.drawSpline()
+            items = self.scene.selectedItems()
+            if items:
+                if self.scene.selectedItems()[0] == self.ruler_start:
+                    x_start = np.clip(
+                        self.mapToScene(
+                            event.pos()).x(),
+                        0,
+                        self.ruler_stop.pos().x() - 5)
+                    self.ruler_start.setPos(
+                        x_start, self.ruler_start.pos().y())
+                elif self.scene.selectedItems()[0] == self.ruler_stop:
+                    x_stop = np.clip(
+                        self.mapToScene(
+                            event.pos()).x(),
+                        self.ruler_start.pos().x() + 5,
+                        245)
+                    self.ruler_stop.setPos(x_stop, self.ruler_stop.pos().y())
         super().mouseMoveEvent(event)
 
     def eventFilter(self, obj, event):

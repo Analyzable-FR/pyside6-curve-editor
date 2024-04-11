@@ -61,8 +61,8 @@ class CurveEditor(QGraphicsView):
 
         self.ruler = QGraphicsRectItem(QRectF(0, 255, 250, 5), self.background)
         gradient = QLinearGradient(0, 250, 250, 250)
-        gradient.setColorAt(0, QColor(255, 255, 255))
-        gradient.setColorAt(1, QColor(0, 0, 0))
+        gradient.setColorAt(0, QColor(0, 0, 0))
+        gradient.setColorAt(1, QColor(255, 255, 255))
         self.ruler.setBrush(QBrush(gradient))
         self.rulerStart = QGraphicsRectItem(QRectF(0, 0, 5, 5), self.ruler)
         self.rulerStart.setPos(0, 255)

@@ -32,7 +32,7 @@ from PySide6.QtCore import Signal
 
 class LevelEditor(QWidget):
 
-    levelChanged = Signal(tuple)
+    levelChanged = Signal(np.ndarray)
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -51,26 +51,33 @@ class LevelEditor(QWidget):
 
         self.presets = [copy.copy(self.view.defaultState)] * 4
 
+        # Init LUT
+        self.bit = 8
+        self.lut = np.zeros((2**self.bit, 4))
+        self.compute_lut(self.view.getSpline(), (0, 1), 0)
+        self.compute_lut(self.view.getSpline(), (0, 1), 1)
+        self.compute_lut(self.view.getSpline(), (0, 1), 2)
+        self.compute_lut(self.view.getSpline(), (0, 1), 3)
+
         self.reset = QPushButton(self.tr("Reset"), self)
         self.layout.addWidget(self.reset)
         self.setLayout(self.layout)
         self.reset.pressed.connect(self.view.reset)
 
-    def compute_lut(self, spline, limits, bit=8):
+    def compute_lut(self, spline, limits, index):
         """
         Computes the look-up table (LUT) based on the spline interpolation and limits.
 
         Parameters:
             spline (PchipInterpolator): The Pchip spline interpolation.
             limits (tuple): A tuple containing the normalized start and end positions of the ruler.
-            bit (int): The bit depth of the LUT. Defaults to 8.
 
         Returns:
-            numpy.ndarray: The computed look-up table.
+            None
 
         """
-        lut = np.clip(spline(np.linspace(0, 1, 2**bit)), limits[0], limits[1])
-        return (1 - lut) * 2**bit
+        self.lut[:, index] = (
+            1 - np.clip(spline(np.linspace(0, 1, 2**self.bit)), limits[0], limits[1])) * 2**self.bit
 
     def viewChanged(self, spline, limits):
         """
@@ -84,8 +91,8 @@ class LevelEditor(QWidget):
             None
 
         """
-        lut = self.compute_lut(spline, limits)
-        self.levelChanged.emit((self.channel.currentText(), lut))
+        self.compute_lut(spline, limits, self.channel.currentIndex())
+        self.levelChanged.emit(self.lut)
 
     def changeChannel(self, index):
         """

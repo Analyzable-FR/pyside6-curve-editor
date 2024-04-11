@@ -28,21 +28,25 @@ import sys
 from level_editor import LevelEditor
 import cv2
 import numpy as np
+import copy
 
 # Global variable only for the example
 img = cv2.imread("test.jpg")
 
 
-def adjust_image(params):
+def adjust_image(param):
     global lut
-    if params[0] == "Value":
-        lut = params[1]
+    lut = param
 
 
 def display():
     global img
     global lut
-    img_ = lut.take(img.astype(np.int64))
+    img_ = copy.copy(img)
+    img_ = lut[:, 0].take(img_.astype(np.int64))
+    img_[:, :, 2] = lut[:, 1].take(img_[:, :, 2].astype(np.int64))
+    img_[:, :, 1] = lut[:, 2].take(img_[:, :, 1].astype(np.int64))
+    img_[:, :, 0] = lut[:, 3].take(img_[:, :, 0].astype(np.int64))
     cv2.imshow("Test", img_.astype(np.uint8))
 
 

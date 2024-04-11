@@ -48,6 +48,16 @@ class CurveEditor(QGraphicsView):
         self.setMouseTracking(True)
 
         self.scene.addLine(0, 250, 250, 0, QPen(Qt.DotLine))
+        for i in [63, 188, 125]:
+            self.scene.addLine(
+                i, 0, i, 250, QPen(
+                    QColor(
+                        0, 0, 0, 100), 1, Qt.DotLine))
+            self.scene.addLine(
+                0, i, 250, i, QPen(
+                    QColor(
+                        0, 0, 0, 100), 1, Qt.DotLine))
+
         self.background = self.scene.addRect(
             0, 0, 250, 250, brush=QBrush(QColor(50, 50, 50, 50)))
 

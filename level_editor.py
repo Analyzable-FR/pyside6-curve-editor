@@ -54,17 +54,17 @@ class LevelEditor(QWidget):
         # Init LUT
         self.bit = 8
         self.lut = np.zeros((2**self.bit, 4))
-        self.compute_lut(self.view.getSpline(), (0, 1), 0)
-        self.compute_lut(self.view.getSpline(), (0, 1), 1)
-        self.compute_lut(self.view.getSpline(), (0, 1), 2)
-        self.compute_lut(self.view.getSpline(), (0, 1), 3)
+        self.computeLut(self.view.getSpline(), (0, 1), 0)
+        self.computeLut(self.view.getSpline(), (0, 1), 1)
+        self.computeLut(self.view.getSpline(), (0, 1), 2)
+        self.computeLut(self.view.getSpline(), (0, 1), 3)
 
         self.reset = QPushButton(self.tr("Reset"), self)
         self.layout.addWidget(self.reset)
         self.setLayout(self.layout)
         self.reset.pressed.connect(self.view.reset)
 
-    def compute_lut(self, spline, limits, index):
+    def computeLut(self, spline, limits, index):
         """
         Computes the look-up table (LUT) based on the spline interpolation and limits.
 
@@ -91,7 +91,7 @@ class LevelEditor(QWidget):
             None
 
         """
-        self.compute_lut(spline, limits, self.channel.currentIndex())
+        self.computeLut(spline, limits, self.channel.currentIndex())
         self.levelChanged.emit(self.lut)
 
     def changeChannel(self, index):

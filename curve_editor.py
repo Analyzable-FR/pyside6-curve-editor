@@ -64,14 +64,14 @@ class CurveEditor(QGraphicsView):
         gradient.setColorAt(0, QColor(255, 255, 255))
         gradient.setColorAt(1, QColor(0, 0, 0))
         self.ruler.setBrush(QBrush(gradient))
-        self.ruler_start = QGraphicsRectItem(QRectF(0, 0, 5, 5), self.ruler)
-        self.ruler_start.setPos(0, 255)
-        self.ruler_start.setFlags(QGraphicsItem.ItemIsSelectable)
-        self.ruler_start.setBrush(QBrush(QColor(255, 255, 255)))
-        self.ruler_stop = QGraphicsRectItem(QRectF(0, 0, 5, 5), self.ruler)
-        self.ruler_stop.setPos(245, 255)
-        self.ruler_stop.setBrush(QBrush(QColor(255, 255, 255)))
-        self.ruler_stop.setFlags(QGraphicsItem.ItemIsSelectable)
+        self.rulerStart = QGraphicsRectItem(QRectF(0, 0, 5, 5), self.ruler)
+        self.rulerStart.setPos(0, 255)
+        self.rulerStart.setFlags(QGraphicsItem.ItemIsSelectable)
+        self.rulerStart.setBrush(QBrush(QColor(255, 255, 255)))
+        self.rulerStop = QGraphicsRectItem(QRectF(0, 0, 5, 5), self.ruler)
+        self.rulerStop.setPos(245, 255)
+        self.rulerStop.setBrush(QBrush(QColor(255, 255, 255)))
+        self.rulerStop.setFlags(QGraphicsItem.ItemIsSelectable)
 
         self.defaultState = self.getState()
 
@@ -175,8 +175,8 @@ class CurveEditor(QGraphicsView):
 
         """
 
-        limits = (self.ruler_start.scenePos().x() / 250,
-                  (self.ruler_stop.scenePos().x() + 5) / 250)
+        limits = (self.rulerStart.scenePos().x() / 250,
+                  (self.rulerStop.scenePos().x() + 5) / 250)
         return limits
 
     def mouseReleaseEvent(self, event):
@@ -207,22 +207,22 @@ class CurveEditor(QGraphicsView):
         if event.buttons() == Qt.LeftButton:
             items = self.scene.selectedItems()
             if items:
-                if self.scene.selectedItems()[0] == self.ruler_start:
-                    x_start = np.clip(
+                if self.scene.selectedItems()[0] == self.rulerStart:
+                    xStart = np.clip(
                         self.mapToScene(
                             event.pos()).x(),
                         0,
-                        self.ruler_stop.pos().x() - 5)
-                    self.ruler_start.setPos(
-                        x_start, self.ruler_start.pos().y())
+                        self.rulerStop.pos().x() - 5)
+                    self.rulerStart.setPos(
+                        xStart, self.rulerStart.pos().y())
                     self.splineChanged.emit(self.getSpline(), self.getLimits())
-                elif self.scene.selectedItems()[0] == self.ruler_stop:
-                    x_stop = np.clip(
+                elif self.scene.selectedItems()[0] == self.rulerStop:
+                    xStop = np.clip(
                         self.mapToScene(
                             event.pos()).x(),
-                        self.ruler_start.pos().x() + 5,
+                        self.rulerStart.pos().x() + 5,
                         245)
-                    self.ruler_stop.setPos(x_stop, self.ruler_stop.pos().y())
+                    self.rulerStop.setPos(xStop, self.rulerStop.pos().y())
                     self.splineChanged.emit(self.getSpline(), self.getLimits())
             elif self.itemAt(event.pos()) in self.points:
                 self.drawSpline()

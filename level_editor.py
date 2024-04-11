@@ -51,18 +51,28 @@ class LevelEditor(QWidget):
 
         self.presets = [copy.copy(self.view.defaultState)] * 4
 
-        # Init LUT
-        self.bit = 8
-        self.lut = np.zeros((2**self.bit, 4))
-        self.computeLut(self.view.getSpline(), (0, 1), 0)
-        self.computeLut(self.view.getSpline(), (0, 1), 1)
-        self.computeLut(self.view.getSpline(), (0, 1), 2)
-        self.computeLut(self.view.getSpline(), (0, 1), 3)
+        self.setBitDepth()
 
         self.reset = QPushButton(self.tr("Reset"), self)
         self.layout.addWidget(self.reset)
         self.setLayout(self.layout)
         self.reset.pressed.connect(self.view.reset)
+
+    def setBitDepth(self, bit=8):
+        """
+        Sets the bit depth and computes the look-up tables for each channel.
+
+        Parameters:
+            bit (int): The bit depth. Defaults to 8.
+
+        Returns:
+            None
+
+        """
+        self.bit = bit
+        self.lut = np.zeros((2**self.bit, self.channel.count()))
+        for i in range(self.channel.count()):
+            self.computeLut(self.view.getSpline(), (0, 1), i)
 
     def computeLut(self, spline, limits, index):
         """

@@ -85,12 +85,12 @@ class CurveEditor(QGraphicsView):
         """
         self.setState(self.defaultState)
 
-    def setState(self, points):
+    def setState(self, params):
         """
-        Sets the state of the curve editor with the given points.
+        Sets the state of the curve editor with the specified parameters.
 
         Parameters:
-            points (list): A list of QPointF objects representing the points.
+            params (tuple): A tuple containing the points and limits to set.
 
         Returns:
             None
@@ -99,9 +99,11 @@ class CurveEditor(QGraphicsView):
         for i in self.points:
             self.scene.removeItem(i)
         self.points = []
-        for i in points:
+        for i in params[0]:
             self.addPoint(i)
         self.drawSpline()
+
+        self.setLimits(params[1])
 
     def getState(self):
         """
@@ -111,7 +113,7 @@ class CurveEditor(QGraphicsView):
             list: A list of QPointF objects representing the current points.
 
         """
-        return [i.pos() for i in self.points]
+        return ([i.pos() for i in self.points], self.getLimits())
 
     def addPoint(self, coord, isMovable=True):
         """
@@ -178,6 +180,20 @@ class CurveEditor(QGraphicsView):
         limits = (self.rulerStart.scenePos().x() / 250,
                   (self.rulerStop.scenePos().x() + 5) / 250)
         return limits
+
+    def setLimits(self, limits):
+        """
+        Sets the limits of the ruler.
+
+        Parameters:
+            limits (tuple): A tuple containing the normalized start and end positions of the ruler.
+
+        Returns:
+            None
+
+        """
+        self.rulerStart.setPos(limits[0] * 250, 255)
+        self.rulerStop.setPos(limits[1] * 250 - 5, 255)
 
     def mouseReleaseEvent(self, event):
         """
